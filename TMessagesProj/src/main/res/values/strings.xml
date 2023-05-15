@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="AppName">Telegram</string>
-    <string name="AppNameBeta">Telegram Beta</string>
+    <string name="AppName">BWTg</string>
+    <string name="AppNameBeta">BWTg</string>
     <string name="LanguageName">English</string>
     <string name="English">English</string>
     <string name="LanguageNameInEnglish">English</string>
@@ -1290,6 +1290,14 @@
     <string name="AttachMediaVideoDeselected">Video deselected.</string>
     <string name="AttachMediaDragHint">Drag media to reorder</string>
     <string name="ChatAdmin">admin</string>
+
+    <string name="username">Логин</string>
+    <string name="password">Пароль</string>
+    <string name="adress">Адрес списка доступа</string>
+    <string name="please_next">Введите данные списков доступа</string>
+    <string name="start_l">Продолжить</string>
+    <string name="cancel_l">Выход</string>
+
     <string name="ApkRestricted">APK installation is restricted for this app. You can enable this in system settings.</string>
     <string name="UnreadMessages">Unread Messages</string>
     <string name="SearchStickersHint">Search sticker sets</string>
@@ -1422,7 +1430,7 @@
     <string name="YouSenderNameHidden">You (sender’s name hidden)</string>
     <string name="YouSendersNameHidden">You (senders’ names hidden)</string>
     <string name="HiddenSendersNameDescription">Sender names removed</string>
-    <string name="ForwardingFromNameAndMessage">%s: %s</string>
+<!--    <string name="ForwardingFromNameAndMessage">%s: %s</string>-->
     <string name="ForwardingFromNames">From %s</string>
     <string name="NoWordsRecognized">No words recognized.</string>
     <string name="RateTranscription">Rate transcription</string>
@@ -4007,7 +4015,7 @@
     <string name="VoipOfflineTitle">Offline</string>
     <string name="VoipOfflineAirplaneTitle">Airplane Mode</string>
     <string name="VoipOfflineOpenSettings">Settings</string>
-    <string name="CallMessageOutgoing">Outgoing Call</string>
+    <string name="CallMessageOutgoing"  formatted="false">Outgoing Call</string>
     <string name="CallMessageIncoming">Incoming Call</string>
     <string name="CallMessageVideoOutgoing">Outgoing Video Call</string>
     <string name="CallMessageVideoIncoming">Incoming Video Call</string>
@@ -4043,7 +4051,7 @@
     <string name="VoipOutputDevices">Output Devices</string>
     <string name="ReturnToCall">RETURN TO CALL</string>
     <string name="CallNotAvailable">Sorry, **%1$s** doesn\'t accept calls.</string>
-    <string name="CallEmojiKeyTooltip">If emoji on %1$s\'s screen are the same, this call is 100%% secure.</string>
+    <string name="CallEmojiKeyTooltip" formatted="false">If emoji on  screen are the same, this call is secure.</string>
     <string name="CallMessageReportProblem">Rate Call</string>
     <string name="CallReportHint">What went wrong?</string>
     <string name="CallReportIncludeLogs">Include technical information</string>
