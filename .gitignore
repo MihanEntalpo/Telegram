@@ -4,3 +4,5 @@ build/
 obj/
 *.iml
 local.properties
+debug.keystore
+TMessagesProj/google-services.json
