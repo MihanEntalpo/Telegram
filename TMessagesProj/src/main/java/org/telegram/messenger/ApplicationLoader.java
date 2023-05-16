@@ -71,6 +71,12 @@ public class ApplicationLoader extends Application {
     private static IMapsProvider mapsProvider;
     private static ILocationServiceProvider locationServiceProvider;
 
+    private static ApplicationLoader singleton;
+
+    public static ApplicationLoader getInstance() {
+        return singleton;
+    }
+
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
@@ -246,6 +252,11 @@ public class ApplicationLoader extends Application {
         }
 
         super.onCreate();
+
+        if (ApplicationLoader.singleton == null)
+        {
+            ApplicationLoader.singleton = this;
+        }
 
         if (BuildVars.LOGS_ENABLED) {
             FileLog.d("app start time = " + (startTime = SystemClock.elapsedRealtime()));

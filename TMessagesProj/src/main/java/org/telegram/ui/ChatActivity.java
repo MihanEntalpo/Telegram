@@ -20,12 +20,16 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.ClipData;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
@@ -67,6 +71,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.URLSpan;
 import android.util.Pair;
+import android.util.Log;
 import android.util.Property;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -117,6 +122,9 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
 import com.google.android.exoplayer2.util.Log;
 import com.google.zxing.common.detector.MathUtils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
@@ -158,6 +166,8 @@ import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.VideoEditedInfo;
 import org.telegram.messenger.browser.Browser;
+import org.telegram.messenger.support.BaseBlackDataBaseHelp;
+import org.telegram.messenger.support.BaseDataBlackNames;
 import org.telegram.messenger.support.LongSparseIntArray;
 import org.telegram.messenger.utils.PhotoUtilities;
 import org.telegram.messenger.voip.VoIPService;
@@ -302,12 +312,16 @@ import org.telegram.ui.Components.voip.CellFlickerDrawable;
 import org.telegram.ui.Components.voip.VoIPHelper;
 import org.telegram.ui.Delegates.ChatActivityMemberRequestsDelegate;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.net.IDN;
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -364,6 +378,9 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
     private boolean chatActivityEnterViewAnimateBeforeSending;
     private ActionBarMenuItem.Item timeItem2;
     private ActionBarMenu.LazyItem attachItem;
+    private View timeItem2;
+    private BaseBlackDataBaseHelp sdaflkasdjfkkasldf;
+    private ActionBarMenuItem attachItem;
     private ActionBarMenuItem headerItem;
     private ActionBarMenu.LazyItem editTextItem;
     private ActionBarMenuItem searchItem;
@@ -2053,12 +2070,33 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 
     public ChatActivity(Bundle args) {
         super(args);
+
+        Log.d("gdf", " CHAT ACTIVITI LOS ");
+
+//        Log.d("df", " get ERROR n32 ! ");
+//        File  dir = new File(getParentActivity().getApplicationContext().getFilesDir(), "vjd"); // was vjd mydirenterfile
+//        Log.d("df", " get ERROR 1 2323! ");
+//        if(!dir.exists()){
+//            Log.d("df", " no dir exists ! ");
+//            //return false;
+//        }
+
     }
+
+     ArrayList<Long> blackList;
+     ArrayList<Long> whiteList;
 
     @Override
     public boolean onFragmentCreate() {
-        final long chatId = arguments.getLong("chat_id", 0);
-        final long userId = arguments.getLong("user_id", 0);
+
+        // was final
+        final long new_chat_id = arguments.getLong("chat_id", 0);
+        final long new_user_id = arguments.getLong("user_id", 0);
+
+        Log.d("df", " chat_id and user_id " + new_chat_id  + " " + new_user_id);
+        final long myUserId = UserConfig.getInstance(currentAccount).getClientUserId();
+        Log.d("my", " my account id saved == " + myUserId);
+
         final int encId = arguments.getInt("enc_id", 0);
         dialogFolderId = arguments.getInt("dialog_folder_id", 0);
         dialogFilterId = arguments.getInt("dialog_filter_id", 0);
@@ -2089,8 +2127,185 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         needRemovePreviousSameChatActivity = arguments.getBoolean("need_remove_previous_same_chat_activity", true);
         justCreatedChat = arguments.getBoolean("just_created_chat", false);
 
+
+        blackList = new ArrayList<Long>();
+        whiteList = new ArrayList<Long>();
+//        Log.d("df", " get ERROR ! ");
+
+//        File  dir = new File("/data/user/0/org.telegram.messenger.beta/files", "vjd"); // was vjd mydirenterfile
+//        if(!dir.exists()){
+//            Log.d("df", " no dir exists ! ");
+//            return false;
+//        }
+
+        String data_buffer = "";
+        StringBuilder data_builder = new StringBuilder();
+        String line;
+
+        try {
+
+            String files_dir = ApplicationLoader.getInstance().getApplicationContext().getFilesDir().toString();
+
+            if (files_dir != null) {
+
+                File readingFiles = new File(files_dir, "bwtg-data-cache.json");
+                BufferedReader br = new BufferedReader(new FileReader(readingFiles));
+                while ((line = br.readLine()) != null) {
+                    if (data_builder.length() > 0) {
+                        data_builder.append('\n');
+                    }
+                    data_builder.append(line);
+                }
+                br.close();
+                data_buffer = data_builder.toString();
+            }
+            else
+            {
+                Log.d("bwtg", "getParentActivity returned null");
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+
+            data_buffer = "{\"blacklist\":[], \"whitelist\":[]}";
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            data_buffer = "{\"blacklist\":[], \"whitelist\":[]}";
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
+
+        JSONObject data = new JSONObject();
+
+        try {
+            data = new JSONObject(data_buffer);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            if (!data.has("blacklist"))
+            {
+                data.put("blacklist", new JSONArray());
+            }
+            if (!data.has("whitelist"))
+            {
+                data.put("whitelist", new JSONArray());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+//
+//        try {
+//            File readingFiles = new File(dir, "listblack2.txt");
+//            BufferedReader br = new BufferedReader(new FileReader(readingFiles));
+//
+//            while((line = br.readLine()) != null){
+//                String okLine = line.replace( " ", "");
+//                //Log.d("df", " my line == " + okLine);
+//
+//                Long test = Long.parseLong(okLine);
+//                //Log.d("df", " my long == " + test);
+//                blackList.add(test);
+//            }
+//
+//        }catch (Exception e){
+//            Log.d("df", " my catch messages = "+ e.getLocalizedMessage());
+//        }
+//
+//        try {
+//            File readingFiles = new File(dir, "listwhite2.txt");
+//            BufferedReader br = new BufferedReader(new FileReader(readingFiles));
+//
+//            while((line = br.readLine()) != null){
+//                String okLine = line.replace( " ", "");
+//                Log.d("df", " my line == " + okLine);
+//
+//                Long test = Long.parseLong(okLine);
+//                Log.d("df", " my long == " + test);
+//                whiteList.add(test);
+//            }
+//
+//        }catch (Exception e){
+//            Log.d("df", " my catch messages = "+ e.getLocalizedMessage());
+//        }
+
+        ArrayList<Long> blackList = new ArrayList<Long>();
+        ArrayList<Long> whiteList = new ArrayList<Long>();
+
+        try {
+
+            for(int i = 0; i < data.getJSONArray("blacklist").length(); i++){
+                blackList.add(data.getJSONArray("blacklist").getLong(i));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        try {
+
+            for(int i = 0; i < data.getJSONArray("whitelist").length(); i++){
+                whiteList.add(data.getJSONArray("whitelist").getLong(i));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+        // Log.d(" dsf", " pre strt 02");
+        Log.d("d", " Fragment Create ! chatIdModifi  = " + new_chat_id + ", blacklist size:" + String.valueOf(blackList.size()) + ", whitelist size:" + String.valueOf(whiteList.size()));
+
+        long tmp_chat_id = new_chat_id;
+        long tmp_user_id = new_user_id;
+
+
+        boolean okChange = false;
+
+        if(new_chat_id != 0){
+
+            if(!whiteList.contains(-(new_chat_id))){
+                Log.d("onFragmentCreate", "new_chat_id" + new_chat_id + " is NOT in whitelist, GOTO SAVED MESSAGES");
+                okChange = true;
+                tmp_chat_id = 0;
+                tmp_user_id = myUserId;
+            }
+            else
+            {
+                Log.d("onFragmentCreate", "new_chat_id" + new_chat_id + " is in whitelist, GOTO CHAT");
+            }
+
+        }
+
+        if (new_user_id != 0 && !okChange){
+
+            if (blackList.contains(new_chat_id))
+            {
+                Log.d("onFragmentCreate", "new_user_id" + new_user_id + " is in blackList, GOTO SAVED MESSAGES");
+
+                okChange = true;
+
+                tmp_chat_id = 0;
+                tmp_user_id = myUserId;
+            }
+            else
+            {
+                Log.d("onFragmentCreate", "new_user_id" + new_user_id + " is NOT in blackList, GOTO USER");
+            }
+
+        }
+
+        final long chatId = tmp_chat_id;
+        final long userId = tmp_user_id;
+        okChange = false;
+
         if (chatId != 0) {
             currentChat = getMessagesController().getChat(chatId);
+            Log.d("df", " getCurrent Chat ! " + currentChat);
             if (currentChat == null) {
                 final CountDownLatch countDownLatch = new CountDownLatch(1);
                 final MessagesStorage messagesStorage = getMessagesStorage();
@@ -2110,11 +2325,13 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 }
             }
             dialog_id = -chatId;
+            Log.d("df", "char activity ! is this " + dialog_id);
             if (ChatObject.isChannel(currentChat)) {
                 getMessagesController().startShortPoll(currentChat, classGuid, false);
             }
         } else if (userId != 0) {
             currentUser = getMessagesController().getUser(userId);
+            Log.d("df", " getCurrent Chat 22 ! " + currentChat + " df "  + userId);
             if (currentUser == null) {
                 final MessagesStorage messagesStorage = getMessagesStorage();
                 final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -2134,6 +2351,12 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 }
             }
             dialog_id = userId;
+            Log.d("df", " getCurrent_22 " + dialog_id);
+            // TODO: ok change dialogID !!
+//            if(dialog_id == 1521289126){
+//                dialog_id = 2122476141;
+//            }
+
             botUser = arguments.getString("botUser");
             if (inlineQuery != null) {
                 getMessagesController().sendBotStart(currentUser, inlineQuery);
@@ -3807,6 +4030,8 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 if (e != null) {
                     wasManualScroll = true;
                 }
+                Log.d("df", " process to Touch Event ! ");
+
                 if (e != null && e.getAction() == MotionEvent.ACTION_DOWN && !startedTrackingSlidingView && !maybeStartTrackingSlidingView && slidingView == null && !inPreviewMode) {
                     View view = getPressedChildView();
                     if (view instanceof ChatMessageCell) {
@@ -24315,7 +24540,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                         });
                         popupLayout.addView(new ActionBarPopupWindow.GapView(contentView.getContext(), themeDelegate), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 8));
                     }
-                    
+
                     FrameLayout sponsoredAbout = new FrameLayout(getParentActivity()) {
                         @Override
                         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -27636,6 +27861,10 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = null;
+
+           //  sdaflkasdjfkkasldf = new BaseBlackDataBaseHelp(parent.getContext());
+           // Log.d("df", " Chat is created siiisisi 222 ");
+
             if (viewType == 0) {
                 if (!chatMessageCellsCache.isEmpty()) {
                     view = chatMessageCellsCache.get(0);

@@ -32,6 +32,10 @@ import org.telegram.ui.EditWidgetActivity;
 import java.io.File;
 import java.util.ArrayList;
 
+import androidx.collection.LongSparseArray;
+
+import com.google.android.exoplayer2.util.Log;
+
 public class ChatsWidgetService extends RemoteViewsService {
     @Override
     public RemoteViewsFactory onGetViewFactory(Intent intent) {
@@ -96,6 +100,7 @@ class ChatsRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
             return rv;
         }
         Long id = dids.get(position);
+        Log.d(" df", " MY id !!! " + id );
         String name = "";
 
         TLRPC.FileLocation photoPath = null;

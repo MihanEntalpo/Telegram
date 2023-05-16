@@ -8,6 +8,8 @@
 
 package org.telegram.messenger;
 
+import com.google.android.exoplayer2.util.Log;
+
 import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
 import org.telegram.ui.Components.AvatarDrawable;
@@ -16,6 +18,10 @@ import org.telegram.ui.Components.BackupImageView;
 public class DialogObject {
 
     public static boolean isChannel(TLRPC.Dialog dialog) {
+         //if( dialog != null){
+             //Log.d(" sd", "IS CHANNEL DIALOG ! " + dialog.id);
+         //}
+
         return dialog != null && (dialog.flags & 1) != 0;
     }
 
@@ -79,10 +85,18 @@ public class DialogObject {
     }
 
     public static boolean isChatDialog(long dialogId) {
+
+        // if( dialog != null){
+        //    Log.d(" sd", "IS CHAT DIALOG ! " + dialogId);
+       // }
+
         return !isEncryptedDialog(dialogId) && !isFolderDialogId(dialogId) && dialogId < 0;
     }
 
     public static boolean isUserDialog(long dialogId) {
+        // Log.d(" sd", "IS USER DIALOG ! ");
+        //Log.d(" sd", "IS USER DIALOG ! " + dialogId);
+
         return !isEncryptedDialog(dialogId) && !isFolderDialogId(dialogId) && dialogId > 0;
     }
 

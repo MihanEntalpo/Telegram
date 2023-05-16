@@ -16,10 +16,12 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -57,6 +59,7 @@ import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -65,6 +68,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -82,11 +86,15 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.exoplayer2.util.Log;
 import com.google.android.gms.common.api.Status;
 import com.google.firebase.appindexing.Action;
 import com.google.firebase.appindexing.FirebaseUserActions;
 import com.google.firebase.appindexing.builders.AssistActionBuilder;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.telegram.PhoneFormat.PhoneFormat;
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
@@ -126,6 +134,7 @@ import org.telegram.messenger.browser.Browser;
 import org.telegram.messenger.voip.VideoCapturerDevice;
 import org.telegram.messenger.voip.VoIPPendingCall;
 import org.telegram.messenger.voip.VoIPService;
+import org.telegram.tgnet.AsynchronousGet;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
@@ -186,6 +195,10 @@ import org.webrtc.voiceengine.WebRtcAudioTrack;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
@@ -285,6 +298,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private boolean loadingThemeAccent;
     private AlertDialog loadingThemeProgressDialog;
 
+    private EditText textPassword;
+    private EditText textName;
+    private EditText textServer;
+
     private boolean isNavigationBarColorFrozen = false;
 
     private boolean navigateToPremiumBot;
@@ -296,6 +313,148 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     private static final int PLAY_SERVICES_REQUEST_CHECK_SETTINGS = 140;
     public static final int SCREEN_CAPTURE_REQUEST_CODE = 520;
+
+
+    protected void showAccessListDialog(View view) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setView(view)
+                .setPositiveButton(LocaleController.getString("Начало", R.string.start_l) , new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        // sign in the user ...
+
+                        android.util.Log.d("df", " get my data's " + textPassword.getText());
+
+                        try {
+
+                            JSONObject data = new JSONObject();
+                            data.put("server", textServer.getText().toString());
+                            data.put("login", textName.getText().toString());
+                            data.put("password", textPassword.getText().toString());
+
+                            File gpxfile = new File(getApplicationContext().getFilesDir().toString(), "bwtg-auth.json");
+                            FileWriter writer = new FileWriter(gpxfile);
+                            writer.append(data.toString());
+                            writer.flush();
+                            writer.close();
+
+                            startLoadingAll( textName.getText().toString(), textPassword.getText().toString(), textServer.getText().toString());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .setNegativeButton(LocaleController.getString("Выход", R.string.cancel_l), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                        showAccessListDialog(view);
+                    }
+                });
+
+
+        final AlertDialog dialog = builder.create();
+
+        dialog.show();
+
+        ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_NEGATIVE).setVisibility(View.INVISIBLE);
+    }
+
+    protected void showToast(String text)
+    {
+        Toast toast=Toast.makeText(getApplicationContext(), text ,Toast.LENGTH_SHORT);
+        toast.setMargin(50,50);
+        toast.show();
+    }
+
+    protected View prepareAccessListDialog()
+    {
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_show, null);
+        textPassword = (EditText) dialogView.findViewById(R.id.password);
+        textName = (EditText) dialogView.findViewById(R.id.username);
+        textServer = (EditText) dialogView.findViewById(R.id.adress);
+
+        String data_buffer = "";
+        StringBuilder data_builder = new StringBuilder();
+        String line;
+
+        try {
+
+            String files_dir = ApplicationLoader.getInstance().getApplicationContext().getFilesDir().toString();
+
+            if (files_dir != null) {
+
+                File readingFiles = new File(files_dir, "bwtg-auth.json");
+                long l = readingFiles.length();
+                BufferedReader br = new BufferedReader(new FileReader(readingFiles));
+                while ((line = br.readLine()) != null) {
+                    if (data_builder.length() > 0) {
+                        data_builder.append('\n');
+                    }
+                    data_builder.append(line);
+                }
+                br.close();
+                data_buffer = data_builder.toString();
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+
+            data_buffer = "{\"server\":\"\", \"login\":\"\", \"password\":\"\"}";
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            data_buffer = "{\"server\":\"\", \"login\":\"\", \"password\":\"\"}";
+        } catch (Exception e) {
+            e.printStackTrace(); // Здесь косяк
+
+        }
+
+        JSONObject data = new JSONObject();
+
+        try {
+            data = new JSONObject(data_buffer);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if (!data.has("server"))
+        {
+            try {
+                data.put("server", "");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        if (!data.has("login"))
+        {
+            try {
+                data.put("login", "");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        if (!data.has("password"))
+        {
+            try {
+                data.put("password", "");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            textServer.setText(data.getString("server"));
+            textName.setText(data.getString("login"));
+            textPassword.setText(data.getString("password"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+        return dialogView;
+    }
 
     public static final int BLUETOOTH_CONNECT_TYPE = 0;
     private SparseIntArray requestedPermissions = new SparseIntArray();
@@ -319,6 +478,32 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         instance = this;
         ApplicationLoader.postInitApplication();
+        Log.d("df", " losLaunch activity ");
+
+
+        String ad =  getApplicationContext().getFilesDir().toString();
+        android.util.Log.d(" dsf", "get my context " + ad);
+
+        this.showToast("Enter auth info");
+
+       //  LinearLayout layout = layoutInflater.inflate(R.layout.toasy_inall,linearLayout);
+
+//        Toast myToast = new Toast(this);
+//        myToast.setDuration(Toast.LENGTH_LONG);
+//        myToast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+//       // myToast.view = layout;
+//        //myToast.setView(layout);
+//        myToast.show();
+
+
+
+        // check if class no own datas
+
+        View dialogView = prepareAccessListDialog();
+
+        this.showAccessListDialog(dialogView);
+
+
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         currentAccount = UserConfig.selectedAccount;
         if (!UserConfig.getInstance(currentAccount).isClientActivated()) {
@@ -380,6 +565,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 drawRippleAbove(canvas, this);
             }
         };
+
+        frameLayout = new FrameLayout(this);
+
+        Log.d("d", "my ok loader");
+
         setContentView(frameLayout, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         if (Build.VERSION.SDK_INT >= 21) {
             themeSwitchImageView = new ImageView(this);
@@ -569,6 +759,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 } else if (id == 11) {
                     Bundle args = new Bundle();
                     args.putLong("user_id", UserConfig.getInstance(currentAccount).getClientUserId());
+                    Log.d("dsf"," our chat activity ! ==  " + UserConfig.getInstance(currentAccount).getClientUserId());
                     presentFragment(new ChatActivity(args));
                     drawerLayoutContainer.closeDrawer(false);
                 } else if (id == 12) {
@@ -763,6 +954,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         Bundle args = savedInstanceState.getBundle("args");
                         switch (fragmentName) {
                             case "chat":
+                                Log.d("sdf"," saved Los 01");
                                 if (args != null) {
                                     ChatActivity chat = new ChatActivity(args);
                                     if (actionBarLayout.addFragmentToStack(chat)) {
@@ -771,6 +963,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                 }
                                 break;
                             case "settings": {
+                                Log.d("sdf"," saved Los 02");
                                 args.putLong("user_id", UserConfig.getInstance(currentAccount).clientUserId);
                                 ProfileActivity settings = new ProfileActivity(args);
                                 actionBarLayout.addFragmentToStack(settings);
@@ -778,6 +971,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                 break;
                             }
                             case "group":
+                                Log.d("sdf"," saved Los 03");
                                 if (args != null) {
                                     GroupCreateFinalActivity group = new GroupCreateFinalActivity(args);
                                     if (actionBarLayout.addFragmentToStack(group)) {
@@ -786,6 +980,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                 }
                                 break;
                             case "channel":
+                                Log.d("sdf"," saved Los 04");
                                 if (args != null) {
                                     ChannelCreateActivity channel = new ChannelCreateActivity(args);
                                     if (actionBarLayout.addFragmentToStack(channel)) {
@@ -794,6 +989,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                 }
                                 break;
                             case "chat_profile":
+                                Log.d("sdf"," saved Los 05");
                                 if (args != null) {
                                     ProfileActivity profile = new ProfileActivity(args);
                                     if (actionBarLayout.addFragmentToStack(profile)) {
@@ -802,6 +998,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                 }
                                 break;
                             case "wallpapers": {
+                                Log.d("sdf"," saved Los 06");
                                 WallpapersListActivity settings = new WallpapersListActivity(WallpapersListActivity.TYPE_ALL);
                                 actionBarLayout.addFragmentToStack(settings);
                                 settings.restoreSelfArgs(savedInstanceState);
@@ -2628,7 +2825,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                 try (Cursor cursor = getContentResolver().query(intent.getData(), null, null, null, null)) {
                                     if (cursor != null) {
                                         if (cursor.moveToFirst()) {
-                                            int accountId = Utilities.parseInt(cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME)));
+                                            @SuppressLint("Range") int accountId = Utilities.parseInt(cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME)));
                                             for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
                                                 if (UserConfig.getInstance(a).getClientUserId() == accountId) {
                                                     intentAccount[0] = a;
@@ -2636,10 +2833,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                                     break;
                                                 }
                                             }
-                                            long userId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.DATA4));
+                                            @SuppressLint("Range") long userId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.DATA4));
                                             NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
                                             push_user_id = userId;
-                                            String mimeType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
+                                            @SuppressLint("Range") String mimeType = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
                                             if (TextUtils.equals(mimeType, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.call")) {
                                                 audioCallUser = true;
                                             } else if (TextUtils.equals(mimeType, "vnd.android.cursor.item/vnd.org.telegram.messenger.android.call.video")) {
@@ -4770,6 +4967,16 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         return foundContacts;
     }
+
+
+    void startLoadingAll(String name, String pass, String server) throws Exception {
+
+
+        new AsynchronousGet(name, pass, server, this).run(getApplicationContext());
+
+    }
+
+
 
     private void createUpdateUI() {
         if (sideMenuContainer == null) {
