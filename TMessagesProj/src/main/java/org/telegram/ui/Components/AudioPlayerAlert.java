@@ -80,6 +80,7 @@ import org.telegram.messenger.R;
 import org.telegram.messenger.SendMessagesHelper;
 import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.audioinfo.AudioInfo;
 import org.telegram.tgnet.TLRPC;
@@ -456,6 +457,12 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                     if (user != null) {
                         actionBar.setTitle(ContactsController.formatName(user.first_name, user.last_name));
                     }
+                }
+            } else if (did == UserConfig.getInstance(currentAccount).getClientUserId()) {
+                if (messageObject.getSavedDialogId() == UserObject.ANONYMOUS) {
+                    actionBar.setTitle(LocaleController.getString(R.string.AnonymousForward));
+                } else {
+                    actionBar.setTitle(LocaleController.getString(R.string.SavedMessages));
                 }
             } else if (DialogObject.isUserDialog(did)) {
                 TLRPC.User user = MessagesController.getInstance(currentAccount).getUser(did);
@@ -1471,7 +1478,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
                     for (int a = 0; a < dids.size(); a++) {
                         long did = dids.get(a).dialogId;
                         if (message != null) {
-                            SendMessagesHelper.getInstance(currentAccount).sendMessage(message.toString(), did, null, null, null, true, null, null, null, true, 0, null, false);
+                            SendMessagesHelper.getInstance(currentAccount).sendMessage(SendMessagesHelper.SendMessageParams.of(message.toString(), did, null, null, null, true, null, null, null, true, 0, null, false));
                         }
                         SendMessagesHelper.getInstance(currentAccount).sendMessage(fmessages, did, false, false, true, 0);
                     }
@@ -1587,7 +1594,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             if (path == null || path.length() == 0) {
                 path = FileLoader.getInstance(currentAccount).getPathToMessage(messageObject.messageOwner).toString();
             }
-            MediaController.saveFile(path, parentActivity, 3, fileName, messageObject.getDocument() != null ? messageObject.getDocument().mime_type : "", () -> BulletinFactory.of((FrameLayout) containerView, resourcesProvider).createDownloadBulletin(BulletinFactory.FileType.AUDIO).show());
+            MediaController.saveFile(path, parentActivity, 3, fileName, messageObject.getDocument() != null ? messageObject.getDocument().mime_type : "", uri -> BulletinFactory.of((FrameLayout) containerView, resourcesProvider).createDownloadBulletin(BulletinFactory.FileType.AUDIO).show());
         }
     }
 
@@ -2044,7 +2051,7 @@ public class AudioPlayerAlert extends BottomSheet implements NotificationCenter.
             titleTextView.setText(title);
             authorTextView.setText(author);
 
-            int duration = lastDuration = messageObject.getDuration();
+            int duration = lastDuration = (int) messageObject.getDuration();
 
             if (durationTextView != null) {
                 durationTextView.setText(duration != 0 ? AndroidUtilities.formatShortDuration(duration) : "-:--");

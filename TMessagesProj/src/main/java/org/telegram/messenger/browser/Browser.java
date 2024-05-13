@@ -254,7 +254,7 @@ public class Browser {
         if (tryTelegraph) {
             try {
                 String host = AndroidUtilities.getHostAuthority(uri);
-                if (isTelegraphUrl(host, true) || uri.toString().toLowerCase().contains("telegram.org/faq") || uri.toString().toLowerCase().contains("telegram.org/privacy")) {
+                if (UserConfig.getInstance(UserConfig.selectedAccount).getCurrentUser() != null && (isTelegraphUrl(host, true) || "telegram.org".equalsIgnoreCase(host) && (uri.toString().toLowerCase().contains("telegram.org/faq") || uri.toString().toLowerCase().contains("telegram.org/privacy") || uri.toString().toLowerCase().contains("telegram.org/blog")))) {
                     final AlertDialog[] progressDialog = new AlertDialog[] {
                         new AlertDialog(context, AlertDialog.ALERT_TYPE_SPINNER)
                     };
@@ -317,7 +317,7 @@ public class Browser {
                 String token = "autologin_token=" + URLEncoder.encode(AccountInstance.getInstance(UserConfig.selectedAccount).getMessagesController().autologinToken, "UTF-8");
                 String url = uri.toString();
                 int idx = url.indexOf("://");
-                String path = idx >= 0 ? url.substring(idx + 3) : url;
+                String path = idx >= 0 && idx <= 5 && !url.substring(0, idx).contains(".") ? url.substring(idx + 3) : url;
                 String fragment = uri.getEncodedFragment();
                 String finalPath = fragment == null ? path : path.substring(0, path.indexOf("#" + fragment));
                 if (finalPath.indexOf('?') >= 0) {
@@ -449,6 +449,16 @@ public class Browser {
         return false;
     }
 
+    public static boolean isTMe(String url) {
+        try {
+            final String linkPrefix = MessagesController.getInstance(UserConfig.selectedAccount).linkPrefix;
+            return TextUtils.equals(AndroidUtilities.getHostAuthority(url), linkPrefix);
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
+        return false;
+    }
+
     public static boolean isInternalUri(Uri uri, boolean[] forceBrowser) {
         return isInternalUri(uri, false, forceBrowser);
     }
@@ -515,6 +525,8 @@ public class Browser {
                 }
                 return true;
             }
+        } else if ("telegram.org".equals(host) && uri != null && uri.getPath() != null && uri.getPath().startsWith("/blog/")) {
+            return true;
         } else if (all) {
             if (host.endsWith("telegram.org") || host.endsWith("telegra.ph") || host.endsWith("telesco.pe")) {
                 return true;

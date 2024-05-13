@@ -115,7 +115,7 @@ public class NotificationsSoundActivity extends BaseFragment implements ChatAtta
 
     private final int tonesStreamType = AudioManager.STREAM_ALARM;
 
-    int topicId = 0;
+    long topicId = 0;
 
     public NotificationsSoundActivity(Bundle args) {
         this(args, null);
@@ -130,7 +130,7 @@ public class NotificationsSoundActivity extends BaseFragment implements ChatAtta
     public boolean onFragmentCreate() {
         if (getArguments() != null) {
             dialogId = getArguments().getLong("dialog_id", 0);
-            topicId = getArguments().getInt("topic_id", 0);
+            topicId = getArguments().getLong("topic_id", 0);
             currentType = getArguments().getInt("type", -1);
         }
         String prefPath;
@@ -149,6 +149,12 @@ public class NotificationsSoundActivity extends BaseFragment implements ChatAtta
             } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                 prefPath = "ChannelSoundPath";
                 prefDocId = "ChannelSoundDocId";
+            } else if (currentType == NotificationsController.TYPE_STORIES) {
+                prefPath = "StoriesSoundPath";
+                prefDocId = "StoriesSoundDocId";
+            } else if (currentType == NotificationsController.TYPE_REACTIONS_MESSAGES || currentType == NotificationsController.TYPE_REACTIONS_STORIES) {
+                prefPath = "ReactionSoundPath";
+                prefDocId = "ReactionSoundDocId";
             } else {
                 throw new RuntimeException("Unsupported type");
             }
@@ -290,6 +296,10 @@ public class NotificationsSoundActivity extends BaseFragment implements ChatAtta
                 actionBar.setTitle(LocaleController.getString("NotificationsSoundGroup", R.string.NotificationsSoundGroup));
             } else if (currentType == NotificationsController.TYPE_CHANNEL) {
                 actionBar.setTitle(LocaleController.getString("NotificationsSoundChannels", R.string.NotificationsSoundChannels));
+            } else if (currentType == NotificationsController.TYPE_STORIES) {
+                actionBar.setTitle(LocaleController.getString(R.string.NotificationsSoundStories));
+            } else if (currentType == NotificationsController.TYPE_REACTIONS_STORIES || currentType == NotificationsController.TYPE_REACTIONS_MESSAGES) {
+                actionBar.setTitle(LocaleController.getString(R.string.NotificationsSoundReactions));
             }
         } else {
             avatarContainer = new ChatAvatarContainer(context, null, false, resourcesProvider);
@@ -783,11 +793,6 @@ public class NotificationsSoundActivity extends BaseFragment implements ChatAtta
     }
 
     @Override
-    public int getNavigationBarColor() {
-        return getThemedColor(Theme.key_windowBackgroundGray);
-    }
-
-    @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.onUserRingtonesUpdated) {
             HashMap<Integer, Tone> currentTones = new HashMap<>();
@@ -881,6 +886,14 @@ public class NotificationsSoundActivity extends BaseFragment implements ChatAtta
                     prefName = "ChannelSound";
                     prefPath = "ChannelSoundPath";
                     prefDocId = "ChannelSoundDocId";
+                } else if (currentType == NotificationsController.TYPE_STORIES) {
+                    prefName = "StoriesSound";
+                    prefPath = "StoriesSoundPath";
+                    prefDocId = "StoriesSoundDocId";
+                } else if (currentType == NotificationsController.TYPE_REACTIONS_STORIES || currentType == NotificationsController.TYPE_REACTIONS_MESSAGES) {
+                    prefName = "ReactionSound";
+                    prefPath = "ReactionSoundPath";
+                    prefDocId = "ReactionSoundDocId";
                 } else {
                     throw new RuntimeException("Unsupported type");
                 }

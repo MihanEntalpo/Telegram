@@ -14,6 +14,8 @@ import android.os.SystemClock;
 import android.util.Base64;
 import android.util.LongSparseArray;
 
+import com.google.android.exoplayer2.util.Log;
+
 import org.telegram.tgnet.SerializedData;
 import org.telegram.tgnet.TLRPC;
 
@@ -65,9 +67,6 @@ public class UserConfig extends BaseController {
     public int loginTime;
     public TLRPC.TL_help_termsOfService unacceptedTermsOfService;
     public long autoDownloadConfigLoadTime;
-
-    public List<String> awaitBillingProductIds = new ArrayList<>();
-    public TLRPC.InputStorePaymentPurpose billingPaymentPurpose;
 
     public String premiumGiftsStickerPack;
     public String genericAnimationsStickerPack;
@@ -160,22 +159,13 @@ public class UserConfig extends BaseController {
                     editor.putBoolean("syncContacts", syncContacts);
                     editor.putBoolean("suggestContacts", suggestContacts);
                     editor.putBoolean("hasSecureData", hasSecureData);
-                    editor.putBoolean("notificationsSettingsLoaded3", notificationsSettingsLoaded);
+                    editor.putBoolean("notificationsSettingsLoaded4", notificationsSettingsLoaded);
                     editor.putBoolean("notificationsSignUpSettingsLoaded", notificationsSignUpSettingsLoaded);
                     editor.putLong("autoDownloadConfigLoadTime", autoDownloadConfigLoadTime);
                     editor.putBoolean("hasValidDialogLoadIds", hasValidDialogLoadIds);
                     editor.putInt("sharingMyLocationUntil", sharingMyLocationUntil);
                     editor.putInt("lastMyLocationShareTime", lastMyLocationShareTime);
                     editor.putBoolean("filtersLoaded", filtersLoaded);
-                    editor.putStringSet("awaitBillingProductIds", new HashSet<>(awaitBillingProductIds));
-                    if (billingPaymentPurpose != null) {
-                        SerializedData data = new SerializedData(billingPaymentPurpose.getObjectSize());
-                        billingPaymentPurpose.serializeToStream(data);
-                        editor.putString("billingPaymentPurpose", Base64.encodeToString(data.toByteArray(), Base64.DEFAULT));
-                        data.cleanup();
-                    } else {
-                        editor.remove("billingPaymentPurpose");
-                    }
                     editor.putString("premiumGiftsStickerPack", premiumGiftsStickerPack);
                     editor.putLong("lastUpdatedPremiumGiftsStickerPack", lastUpdatedPremiumGiftsStickerPack);
 
@@ -228,7 +218,7 @@ public class UserConfig extends BaseController {
                         editor.remove("user");
                     }
 
-                    editor.commit();
+                    editor.apply();
                 } catch (Exception e) {
                     FileLog.e(e);
                 }
@@ -281,7 +271,8 @@ public class UserConfig extends BaseController {
                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.premiumStatusChangedGlobal);
 
                 getMediaDataController().loadPremiumPromo(false);
-                getMediaDataController().loadReactions(false, true);
+                getMediaDataController().loadReactions(false, null);
+                getMessagesController().getStoriesController().invalidateStoryLimit();
             });
         }
     }
@@ -311,25 +302,13 @@ public class UserConfig extends BaseController {
             syncContacts = preferences.getBoolean("syncContacts", true);
             suggestContacts = preferences.getBoolean("suggestContacts", true);
             hasSecureData = preferences.getBoolean("hasSecureData", false);
-            notificationsSettingsLoaded = preferences.getBoolean("notificationsSettingsLoaded3", false);
+            notificationsSettingsLoaded = preferences.getBoolean("notificationsSettingsLoaded4", false);
             notificationsSignUpSettingsLoaded = preferences.getBoolean("notificationsSignUpSettingsLoaded", false);
             autoDownloadConfigLoadTime = preferences.getLong("autoDownloadConfigLoadTime", 0);
             hasValidDialogLoadIds = preferences.contains("2dialogsLoadOffsetId") || preferences.getBoolean("hasValidDialogLoadIds", false);
             sharingMyLocationUntil = preferences.getInt("sharingMyLocationUntil", 0);
             lastMyLocationShareTime = preferences.getInt("lastMyLocationShareTime", 0);
             filtersLoaded = preferences.getBoolean("filtersLoaded", false);
-            awaitBillingProductIds = new ArrayList<>(preferences.getStringSet("awaitBillingProductIds", Collections.emptySet()));
-            if (preferences.contains("billingPaymentPurpose")) {
-                String purpose = preferences.getString("billingPaymentPurpose", null);
-                if (purpose != null) {
-                    byte[] arr = Base64.decode(purpose, Base64.DEFAULT);
-                    if (arr != null) {
-                        SerializedData data = new SerializedData();
-                        billingPaymentPurpose = TLRPC.InputStorePaymentPurpose.TLdeserialize(data, data.readInt32(false), false);
-                        data.cleanup();
-                    }
-                }
-            }
             premiumGiftsStickerPack = preferences.getString("premiumGiftsStickerPack", null);
             lastUpdatedPremiumGiftsStickerPack = preferences.getLong("lastUpdatedPremiumGiftsStickerPack", 0);
 
