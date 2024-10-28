@@ -250,6 +250,11 @@ public class LinkSpanDrawable<S extends CharacterStyle> {
             mParent = parentView;
         }
 
+        private Runnable additionalInvalidate;
+        public void setAdditionalInvalidate(Runnable additionalInvalidate) {
+            this.additionalInvalidate = additionalInvalidate;
+        }
+
         private ArrayList<Pair<LinkSpanDrawable, Object>> mLinks = new ArrayList<>();
         private int mLinksCount = 0;
 
@@ -495,6 +500,9 @@ public class LinkSpanDrawable<S extends CharacterStyle> {
             } else if (tryParent && mParent != null) {
                 mParent.invalidate();
             }
+            if (additionalInvalidate != null) {
+                additionalInvalidate.run();
+            }
         }
     }
 
@@ -730,6 +738,16 @@ public class LinkSpanDrawable<S extends CharacterStyle> {
         public void setTextColor(ColorStateList colors) {
             super.setTextColor(colors);
             emojiColorFilter = new PorterDuffColorFilter(getPaint().linkColor, PorterDuff.Mode.SRC_IN);
+        }
+
+        public boolean hasLinks() {
+            Layout textLayout = getLayout();
+            if (textLayout == null) return false;
+            CharSequence text = textLayout.getText();
+            if (!(text instanceof Spanned)) return false;
+            Spanned spanned = (Spanned) text;
+            ClickableSpan[] spans = spanned.getSpans(0, spanned.length(), ClickableSpan.class);
+            return spans != null && spans.length > 0;
         }
     }
 

@@ -131,15 +131,15 @@ public class BackButtonMenu {
                     thumb = user.photo.strippedBitmap;
                 }
                 if (pDialog.activity == ChatActivity.class && UserObject.isUserSelf(user)) {
-                    name = LocaleController.getString("SavedMessages", R.string.SavedMessages);
+                    name = LocaleController.getString(R.string.SavedMessages);
                     avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_SAVED);
                     imageView.setImageDrawable(avatarDrawable);
                 } else if (UserObject.isReplyUser(user)) {
-                    name = LocaleController.getString("RepliesTitle", R.string.RepliesTitle);
+                    name = LocaleController.getString(R.string.RepliesTitle);
                     avatarDrawable.setAvatarType(AvatarDrawable.AVATAR_TYPE_REPLIES);
                     imageView.setImageDrawable(avatarDrawable);
                 } else if (UserObject.isDeleted(user)) {
-                    name = LocaleController.getString("HiddenName", R.string.HiddenName);
+                    name = LocaleController.getString(R.string.HiddenName);
                     avatarDrawable.setInfo(thisFragment.getCurrentAccount(), user);
                     imageView.setImage(ImageLocation.getForUser(user, ImageLocation.TYPE_SMALL), "50_50", avatarDrawable, user);
                 } else {
@@ -153,7 +153,7 @@ public class BackButtonMenu {
                 imageView.setImageDrawable(drawable);
                 imageView.setSize(AndroidUtilities.dp(24), AndroidUtilities.dp(24));
                 imageView.setColorFilter(new PorterDuffColorFilter(Theme.getColor(Theme.key_actionBarDefaultSubmenuItemIcon, resourcesProvider), PorterDuff.Mode.MULTIPLY));
-                titleView.setText(LocaleController.getString("AllChats", R.string.AllChats));
+                titleView.setText(LocaleController.getString(R.string.AllChats));
                 addDivider = true;
             }
 
@@ -246,15 +246,29 @@ public class BackButtonMenu {
         if (parentLayout == null) {
             return dialogs;
         }
+        int maxStackIndex = -1;
+        List<PulledDialog> pulledDialogs = parentLayout.getPulledDialogs();
+        if (pulledDialogs != null) {
+            for (int i = 0; i < pulledDialogs.size(); i++) {
+                PulledDialog pulledDialog = pulledDialogs.get(i);
+                if (pulledDialog.topic == null || pulledDialog.topic.id == topicId) {
+                    continue;
+                }
+                if (pulledDialog.stackIndex >= maxStackIndex) {
+                    maxStackIndex = pulledDialog.stackIndex;
+                }
+                dialogs.add(pulledDialog);
+            }
+        }
         if (parentLayout.getFragmentStack().size() > 1 && parentLayout.getFragmentStack().get(parentLayout.getFragmentStack().size() - 2) instanceof TopicsFragment) {
             PulledDialog pulledDialog = new PulledDialog();
             dialogs.add(pulledDialog);
-            pulledDialog.stackIndex = 0;
+            pulledDialog.stackIndex = ++maxStackIndex;
             pulledDialog.activity = DialogsActivity.class;
 
             pulledDialog = new PulledDialog();
             dialogs.add(pulledDialog);
-            pulledDialog.stackIndex = parentLayout.getFragmentStack().size() - 2;
+            pulledDialog.stackIndex = -1;
             pulledDialog.activity = TopicsFragment.class;
             pulledDialog.chat = MessagesController.getInstance(thisFragment.getCurrentAccount()).getChat(-currentDialogId);
         } else {
@@ -263,16 +277,6 @@ public class BackButtonMenu {
             pulledDialog.stackIndex = -1;
             pulledDialog.activity = TopicsFragment.class;
             pulledDialog.chat = MessagesController.getInstance(thisFragment.getCurrentAccount()).getChat(-currentDialogId);
-        }
-        List<PulledDialog> pulledDialogs = parentLayout.getPulledDialogs();
-        if (pulledDialogs != null) {
-            for (int i = 0; i < pulledDialogs.size(); i++) {
-                PulledDialog pulledDialog = pulledDialogs.get(i);
-                if (pulledDialog.topic == null || pulledDialog.topic.id == topicId) {
-                    continue;
-                }
-                dialogs.add(pulledDialog);
-            }
         }
         Collections.sort(dialogs, (d1, d2) -> d2.stackIndex - d1.stackIndex);
         return dialogs;
@@ -416,7 +420,7 @@ public class BackButtonMenu {
         }
         boolean alreadyAdded = false;
         for (PulledDialog d : parentLayout.getPulledDialogs()) {
-            if (topic == null && d.dialogId == dialogId || topic != null && d.topic.id == topic.id) {
+            if (topic == null && d.dialogId == dialogId || topic != null && d.topic != null && d.topic.id == topic.id) {
                 alreadyAdded = true;
                 break;
             }

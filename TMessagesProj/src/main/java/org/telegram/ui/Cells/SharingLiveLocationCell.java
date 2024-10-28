@@ -99,7 +99,7 @@ public class SharingLiveLocationCell extends FrameLayout {
         NotificationCenter.listenEmojiLoading(nameTextView);
         nameTextView.setTextSize(16);
         nameTextView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
-        nameTextView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
+        nameTextView.setTypeface(AndroidUtilities.bold());
         nameTextView.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
         nameTextView.setScrollNonFitText(true);
 
@@ -327,7 +327,7 @@ public class SharingLiveLocationCell extends FrameLayout {
             if (address != null) {
                 distanceTextView.setText(address);
             } else if (!userLocationDenied) {
-                distanceTextView.setText(LocaleController.getString("Loading", R.string.Loading));
+                distanceTextView.setText(LocaleController.getString(R.string.Loading));
             } else {
                 distanceTextView.setText("");
             }

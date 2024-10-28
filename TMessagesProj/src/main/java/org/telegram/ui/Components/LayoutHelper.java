@@ -200,11 +200,21 @@ public class LayoutHelper {
         return layoutParams;
     }
 
+    public static LinearLayout.LayoutParams createLinear(float width, float height, int gravity) {
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(getSize(width), getSize(height));
+        layoutParams.gravity = gravity;
+        return layoutParams;
+    }
+
     public static LinearLayout.LayoutParams createLinear(int width, int height, float weight) {
         return new LinearLayout.LayoutParams(getSize(width), getSize(height), weight);
     }
 
     public static LinearLayout.LayoutParams createLinear(int width, int height) {
+        return new LinearLayout.LayoutParams(getSize(width), getSize(height));
+    }
+
+    public static LinearLayout.LayoutParams createLinear(float width, float height) {
         return new LinearLayout.LayoutParams(getSize(width), getSize(height));
     }
 

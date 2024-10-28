@@ -555,7 +555,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
         zoomOutButton.setPadding(dp(8), 0, dp(8), 0);
         zoomOutText = new TextView(context);
         zoomOutText.setTextColor(Color.WHITE);
-        zoomOutText.setTypeface(AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM));
+        zoomOutText.setTypeface(AndroidUtilities.bold());
         zoomOutText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         zoomOutText.setText(LocaleController.getString(R.string.PhotoEditorZoomOut));
         zoomOutImage = new ImageView(context);
@@ -574,7 +574,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
         undoAllButton.setText(LocaleController.getString(R.string.PhotoEditorClearAll));
         undoAllButton.setGravity(Gravity.CENTER_VERTICAL);
         undoAllButton.setTextColor(Color.WHITE);
-        undoAllButton.setTypeface(AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM));
+        undoAllButton.setTypeface(AndroidUtilities.bold());
         undoAllButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         undoAllButton.setOnClickListener(v -> {
             if (!undoStore.canUndo()) {
@@ -598,7 +598,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
         cancelTextButton.setPadding(dp(8), 0, dp(8), 0);
         cancelTextButton.setGravity(Gravity.CENTER_VERTICAL);
         cancelTextButton.setTextColor(Color.WHITE);
-        cancelTextButton.setTypeface(AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM));
+        cancelTextButton.setTypeface(AndroidUtilities.bold());
         cancelTextButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         cancelTextButton.setOnClickListener(v -> {
             if (currentEntityView instanceof TextPaintView) {
@@ -620,7 +620,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
         doneTextButton.setPadding(dp(8), 0, dp(8), 0);
         doneTextButton.setGravity(Gravity.CENTER_VERTICAL);
         doneTextButton.setTextColor(Color.WHITE);
-        doneTextButton.setTypeface(AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM));
+        doneTextButton.setTypeface(AndroidUtilities.bold());
         doneTextButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         doneTextButton.setOnClickListener(v -> {
             selectEntity(null);
@@ -1289,7 +1289,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
         drawTab.setTextColor(Color.WHITE);
         drawTab.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         drawTab.setGravity(Gravity.CENTER_HORIZONTAL);
-        drawTab.setTypeface(AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM));
+        drawTab.setTypeface(AndroidUtilities.bold());
         drawTab.setSingleLine();
         drawTab.setOnClickListener(v -> {
             if (editingText) {
@@ -1308,7 +1308,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
         stickerTab.setTextColor(Color.WHITE);
         stickerTab.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         stickerTab.setGravity(Gravity.CENTER_HORIZONTAL);
-        stickerTab.setTypeface(AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM));
+        stickerTab.setTypeface(AndroidUtilities.bold());
         stickerTab.setAlpha(0.6f);
         stickerTab.setSingleLine();
         tabsLayout.addView(stickerTab, LayoutHelper.createLinear(0, LayoutHelper.WRAP_CONTENT, 1f));
@@ -1320,7 +1320,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
         textTab.setTextColor(Color.WHITE);
         textTab.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
         textTab.setGravity(Gravity.CENTER_HORIZONTAL);
-        textTab.setTypeface(AndroidUtilities.getTypeface(AndroidUtilities.TYPEFACE_ROBOTO_MEDIUM));
+        textTab.setTypeface(AndroidUtilities.bold());
         textTab.setAlpha(0.6f);
         textTab.setSingleLine();
         textTab.setOnClickListener(v -> {
@@ -1444,6 +1444,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
             if (widget == EmojiBottomSheet.WIDGET_PHOTO) {
                 showPhotoAlert();
             }
+            return true;
         });
         emojiBottomSheet.setOnDismissListener(di -> {
             onOpenCloseStickersAlert(false);
@@ -1497,7 +1498,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
             }
 
             @Override
-            public void didPressedButton(int button, boolean arg, boolean notify, int scheduleDate, boolean forceDocument) {
+            public void didPressedButton(int button, boolean arg, boolean notify, int scheduleDate, long effectId, boolean invertMedia, boolean forceDocument) {
                 try {
                     HashMap<Object, Object> photos = chatAttachAlert.getPhotoLayout().getSelectedPhotos();
                     if (!photos.isEmpty()) {
@@ -2071,10 +2072,10 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
                 return;
             }
             AlertDialog.Builder builder = new AlertDialog.Builder(parentActivity, resourcesProvider);
-            builder.setMessage(LocaleController.getString("PhotoEditorDiscardAlert", R.string.PhotoEditorDiscardAlert));
-            builder.setTitle(LocaleController.getString("DiscardChanges", R.string.DiscardChanges));
-            builder.setPositiveButton(LocaleController.getString("PassportDiscard", R.string.PassportDiscard), (dialogInterface, i) -> okRunnable.run());
-            builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
+            builder.setMessage(LocaleController.getString(R.string.PhotoEditorDiscardAlert));
+            builder.setTitle(LocaleController.getString(R.string.DiscardChanges));
+            builder.setPositiveButton(LocaleController.getString(R.string.PassportDiscard), (dialogInterface, i) -> okRunnable.run());
+            builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
             photoViewer.showAlertDialog(builder);
         } else {
             okRunnable.run();
@@ -2720,7 +2721,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
             deleteView.setPadding(dp(16), 0, dp(14), 0);
             deleteView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
             deleteView.setTag(0);
-            deleteView.setText(LocaleController.getString("PaintDelete", R.string.PaintDelete));
+            deleteView.setText(LocaleController.getString(R.string.PaintDelete));
             deleteView.setEllipsize(TextUtils.TruncateAt.END);
             deleteView.setOnClickListener(v -> {
                 removeEntity(entityView);
@@ -2740,7 +2741,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
                 editView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                 editView.setEllipsize(TextUtils.TruncateAt.END);
                 editView.setTag(1);
-                editView.setText(LocaleController.getString("PaintEdit", R.string.PaintEdit));
+                editView.setText(LocaleController.getString(R.string.PaintEdit));
                 editView.setOnClickListener(v -> {
                     editSelectedTextEntity();
 
@@ -2760,7 +2761,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
                 flipView.setPadding(dp(14), 0, dp(16), 0);
                 flipView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                 flipView.setTag(2);
-                flipView.setText(LocaleController.getString("Flip", R.string.Flip));
+                flipView.setText(LocaleController.getString(R.string.Flip));
                 flipView.setOnClickListener(v -> {
                     ((StickerView) entityView).mirror(true);
 
@@ -2780,7 +2781,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
                 duplicateView.setPadding(dp(14), 0, dp(16), 0);
                 duplicateView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
                 duplicateView.setTag(2);
-                duplicateView.setText(LocaleController.getString("PaintDuplicate", R.string.PaintDuplicate));
+                duplicateView.setText(LocaleController.getString(R.string.PaintDuplicate));
                 duplicateView.setOnClickListener(v -> {
                     duplicateSelectedEntity();
 
@@ -3680,10 +3681,10 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
             @Override
             public void onClearEmojiRecent() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), resourcesProvider);
-                builder.setTitle(LocaleController.getString("ClearRecentEmojiTitle", R.string.ClearRecentEmojiTitle));
-                builder.setMessage(LocaleController.getString("ClearRecentEmojiText", R.string.ClearRecentEmojiText));
-                builder.setPositiveButton(LocaleController.getString("ClearButton", R.string.ClearButton), (dialogInterface, i) -> emojiView.clearRecentEmoji());
-                builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
+                builder.setTitle(LocaleController.getString(R.string.ClearRecentEmojiTitle));
+                builder.setMessage(LocaleController.getString(R.string.ClearRecentEmojiText));
+                builder.setPositiveButton(LocaleController.getString(R.string.ClearButton), (dialogInterface, i) -> emojiView.clearRecentEmoji());
+                builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                 builder.show();
             }
         });

@@ -32,7 +32,6 @@ import android.transition.TransitionManager;
 import android.transition.TransitionSet;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.Gravity;
@@ -52,7 +51,6 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -62,7 +60,6 @@ import androidx.core.graphics.ColorUtils;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.AnimationNotificationsLocker;
 import org.telegram.messenger.LocaleController;
-import org.telegram.messenger.NotificationCenter;
 import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.Utilities;
@@ -126,11 +123,19 @@ public class ActionBarMenuItem extends FrameLayout {
         public void onSearchPressed(EditText editText) {
         }
 
+        public boolean canClearCaption() {
+            return true;
+        }
+
         public void onCaptionCleared() {
         }
 
         public boolean forceShowClear() {
             return false;
+        }
+
+        public boolean showClearForCaption() {
+            return true;
         }
 
         public Animator getCustomToggleTransition() {
@@ -238,7 +243,7 @@ public class ActionBarMenuItem extends FrameLayout {
         if (text) {
             textView = new TextView(context);
             textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-            textView.setTypeface(AndroidUtilities.getTypeface("fonts/rmedium.ttf"));
+            textView.setTypeface(AndroidUtilities.bold());
             textView.setGravity(Gravity.CENTER);
             textView.setPadding(AndroidUtilities.dp(4), 0, AndroidUtilities.dp(4), 0);
             textView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -582,6 +587,29 @@ public class ActionBarMenuItem extends FrameLayout {
                     popupWindow.dismiss(allowCloseAnimation);
                 }
             }
+            if (parentMenu != null) {
+                parentMenu.onItemClick((Integer) view.getTag());
+            } else if (delegate != null) {
+                delegate.onItemClick((Integer) view.getTag());
+            }
+        });
+        return cell;
+    }
+
+    public View addSubItem(int id, View cell) {
+        createPopupLayout();
+
+        cell.setMinimumWidth(AndroidUtilities.dp(196));
+        cell.setTag(id);
+        popupLayout.addView(cell);
+        LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) cell.getLayoutParams();
+        if (LocaleController.isRTL) {
+            layoutParams.gravity = Gravity.RIGHT;
+        }
+        layoutParams.width = LayoutHelper.MATCH_PARENT;
+        layoutParams.height = AndroidUtilities.dp(48);
+        cell.setLayoutParams(layoutParams);
+        cell.setOnClickListener(view -> {
             if (parentMenu != null) {
                 parentMenu.onItemClick((Integer) view.getTag());
             } else if (delegate != null) {
@@ -1580,7 +1608,7 @@ public class ActionBarMenuItem extends FrameLayout {
                         }
                     }
                     clearSearchFilters();
-                } else if (searchFieldCaption != null && searchFieldCaption.getVisibility() == VISIBLE) {
+                } else if (searchFieldCaption != null && searchFieldCaption.getVisibility() == VISIBLE && (listener == null || listener.canClearCaption())) {
                     searchFieldCaption.setVisibility(GONE);
                     if (listener != null) {
                         listener.onCaptionCleared();
@@ -1589,7 +1617,7 @@ public class ActionBarMenuItem extends FrameLayout {
                 searchField.requestFocus();
                 AndroidUtilities.showKeyboard(searchField);
             });
-            clearButton.setContentDescription(LocaleController.getString("ClearButton", R.string.ClearButton));
+            clearButton.setContentDescription(LocaleController.getString(R.string.ClearButton));
             if (wrapSearchInScrollView) {
                 wrappedSearchFrameLayout.addView(clearButton, LayoutHelper.createFrame(48, LayoutHelper.MATCH_PARENT, Gravity.CENTER_VERTICAL | Gravity.RIGHT));
             } else {
@@ -1611,7 +1639,7 @@ public class ActionBarMenuItem extends FrameLayout {
         if (clearButton != null) {
             if (!hasRemovableFilters() && TextUtils.isEmpty(searchField.getText()) &&
                     (listener == null || !listener.forceShowClear()) &&
-                    (searchFieldCaption == null || searchFieldCaption.getVisibility() != VISIBLE)) {
+                    (searchFieldCaption == null || searchFieldCaption.getVisibility() != VISIBLE || listener != null && !listener.showClearForCaption())) {
                 if (clearButton.getTag() != null) {
                     clearButton.setTag(null);
                     if (clearButtonAnimator != null) {
@@ -2508,11 +2536,11 @@ public class ActionBarMenuItem extends FrameLayout {
         lazyList.clear();
     }
 
-    public static ActionBarMenuSubItem addItem(ActionBarPopupWindow.ActionBarPopupWindowLayout windowLayout, int icon, CharSequence text, boolean needCheck, Theme.ResourcesProvider resourcesProvider) {
+    public static ActionBarMenuSubItem addItem(ViewGroup windowLayout, int icon, CharSequence text, boolean needCheck, Theme.ResourcesProvider resourcesProvider) {
         return addItem(false, false, windowLayout, icon, text, needCheck, resourcesProvider);
     }
 
-    public static ActionBarMenuSubItem addItem(boolean first, boolean last, ActionBarPopupWindow.ActionBarPopupWindowLayout windowLayout, int icon, CharSequence text, boolean needCheck, Theme.ResourcesProvider resourcesProvider) {
+    public static ActionBarMenuSubItem addItem(boolean first, boolean last, ViewGroup windowLayout, int icon, CharSequence text, boolean needCheck, Theme.ResourcesProvider resourcesProvider) {
         ActionBarMenuSubItem cell = new ActionBarMenuSubItem(windowLayout.getContext(), needCheck, first, last, resourcesProvider);
         cell.setTextAndIcon(text, icon);
         cell.setMinimumWidth(AndroidUtilities.dp(196));
